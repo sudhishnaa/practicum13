@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pet Sphere Task Manager</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #eef4ff;
+        margin: 0;
+        padding: 20px;
+    }
+
+    header {
+        background: #233b70;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        border-radius: 10px;
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: auto;
+    }
+
+    .add-section {
+        background: white;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    input, select {
+        padding: 12px;
+        margin: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    #taskInput {
+        width: 35%;
+    }
+
+    button {
+        padding: 10px 15px;
+        background: #2878d0;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 3px;
+    }
+
+    button:hover {
+        background: #174f91;
+    }
+
+    .search {
+        width: 80%;
+        max-width: 400px;
+    }
+
+    .board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+
+    .column {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        min-height: 250px;
+    }
+
+    .column h3 {
+        text-align: center;
+        color: #233b70;
+    }
+
+    .task {
+        background: #dcecff;
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 8px;
+        overflow-wrap: anywhere;
+    }
+
+    .task p {
+        font-size: 14px;
+    }
+
+    .task select {
+        width: 100%;
+    }
+
+    .edit {
+        background: #e69a25;
+    }
+
+    .delete {
+        background: #d94343;
+    }
+
+    @media(max-width: 700px) {
+        .board {
+            grid-template-columns: 1fr;
+        }
+
+        #taskInput {
+            width: 80%;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>🐾 Pet Sphere</h1>
+    <p>Pet Care Task Management System</p>
+</header>
+
+<div class="add-section">
+
+    <h2>Add New Pet Task</h2>
+
+    <input type="text" id="taskInput"
+    placeholder="Enter task name">
+
+    <select id="category">
+        <option value="Feeding">Feeding</option>
+        <option value="Health">Health</option>
+        <option value="Grooming">Grooming</option>
+        <option value="Training">Training</option>
+    </select>
+
+    <button onclick="addTask()">Add Task</button>
+
+    <br>
+
+    <input type="text" id="searchInput"
+    class="search"
+    placeholder="Search tasks..."
+    oninput="displayTasks()">
+
+</div>
+
+<div class="board">
+
+    <div class="column">
+        <h3>Pending</h3>
+        <div id="pendingList"></div>
+    </div>
+
+    <div class="column">
+        <h3>In Progress</h3>
+        <div id="progressList"></div>
+    </div>
+
+    <div class="column">
+        <h3>Completed</h3>
+        <div id="completedList"></div>
+    </div>
+
+</div>
+</div>
+
+<script>
+
+// Array of Tasks
+let tasks = [
+    {
+        id: 1,
+        name: "Feed the Pet",
+        category: "Feeding",
+        status: "Pending"
+    },
+    {
+        id: 2,
+        name: "Give Vaccination",
+        category: "Health",
+        status: "In Progress"
+    },
+    {
+        id: 3,
+        name: "Pet Bath",
+        category: "Grooming",
+        status: "Completed"
+    }
+];
+
+let nextId = 4;
+
+// CREATE - Add New Task
+function addTask() {
+
+    let name = document.getElementById("taskInput").value.trim();
+
+    let category = document.getElementById("category").value;
+
+    if (name === "") {
+        alert("Please enter a task!");
+        return;
+    }
+
+    let newTask = {
+        id: nextId++,
+        name: name,
+        category: category,
+        status: "Pending"
+    };
+
+    tasks.push(newTask);
+
+    document.getElementById("taskInput").value = "";
+
+    displayTasks();
+}
+
+// READ - Display Tasks
+function displayTasks() {
+
+    let pending = document.getElementById("pendingList");
+    let progress = document.getElementById("progressList");
+    let completed = document.getElementById("completedList");
+
+    pending.innerHTML = "";
+    progress.innerHTML = "";
+    completed.innerHTML = "";
+
+    let search = document.getElementById("searchInput").value.toLowerCase();
+
+    tasks.forEach(function(task) {
+
+        if (!task.name.toLowerCase().includes(search)) {
+            return;
+        }
+
+        let card = document.createElement("div");
+        card.className = "task";
+
+        let title = document.createElement("h4");
+        title.textContent = task.name;
+
+        let category = document.createElement("p");
+        category.textContent = task.category;
+
+        let status = document.createElement("select");
+
+        ["Pending", "In Progress", "Completed"].forEach(function(value) {
+            let option = document.createElement("option");
+            option.value = value;
+            option.textContent = value;
+
+            if (task.status === value) {
+                option.selected = true;
+            }
+
+            status.appendChild(option);
+        });
+
+        status.onchange = function() {
+            updateStatus(task.id, status.value);
+        };
+
+        let editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.className = "edit";
+        editBtn.onclick = function() {
+            editTask(task.id);
+        };
+
+        let deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.className = "delete";
+        deleteBtn.onclick = function() {
+            deleteTask(task.id);
+        };
+
+        card.appendChild(title);
+        card.appendChild(category);
+        card.appendChild(status);
+        card.appendChild(editBtn);
+        card.appendChild(deleteBtn);
+
+        if (task.status === "Pending") {
+            pending.appendChild(card);
+        }
+        else if (task.status === "In Progress") {
+            progress.appendChild(card);
+        }
+        else {
+            completed.appendChild(card);
+        }
+
+    });
+}
+
+// UPDATE - Edit Task
+function editTask(id) {
+
+    let task = tasks.find(function(t) {
+        return t.id === id;
+    });
+
+    let newName = prompt("Edit Task Name:", task.name);
+
+    if (newName !== null && newName.trim() !== "") {
+        task.name = newName.trim();
+        displayTasks();
+    }
+}
+
+// UPDATE - Change Status
+function updateStatus(id, newStatus) {
+
+    let task = tasks.find(function(t) {
+        return t.id === id;
+    });
+
+    if (task) {
+        task.status = newStatus;
+        displayTasks();
+    }
+}
+
+// DELETE - Remove Task
+function deleteTask(id) {
+
+    if (confirm("Are you sure you want to delete this task?")) {
+
+        tasks = tasks.filter(function(task) {
+            return task.id !== id;
+        });
+
+        displayTasks();
+    }
+}
+
+// Initial Display
+displayTasks();
+
+</script>
+
+</body>
+</html>
